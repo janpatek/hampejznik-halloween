@@ -1,0 +1,1283 @@
+<!doctype html>
+<html lang="cs">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#16121D" media="(prefers-color-scheme: dark)">
+<meta name="theme-color" content="#ECE7F1" media="(prefers-color-scheme: light)">
+<title>Hampejzníkova halloweenská noc – ovladač hry</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ctext y='.9em' font-size='90'%3E%F0%9F%95%AF%EF%B8%8F%3C/text%3E%3C/svg%3E">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Alegreya:ital,wght@0,400;0,700;1,400&family=Grenze+Gotisch:wght@600;700&display=swap">
+<style>
+:root{
+  --bg:#ECE7F1; --surface:#FBF9FD; --surface-2:#E3DCEB; --ink:#2A1F33; --muted:#625570; --line:#D2C8DE;
+  --flame:#A4520B;
+  --c-narr:#A4520B; --c-hamp:#4A7130; --c-jisk:#14797A; --c-roz:#93660E; --c-splo:#146B5B; --c-boh:#8A431D;
+  --char:var(--flame);
+  --display:'Grenze Gotisch', Georgia, 'Times New Roman', serif;
+  --text:'Alegreya', Georgia, 'Iowan Old Style', 'Palatino Linotype', serif;
+  --r-lg:18px; --r-sm:12px;
+  color-scheme:light;
+  box-sizing:border-box;
+  padding-top:env(safe-area-inset-top,0px);
+  padding-bottom:env(safe-area-inset-bottom,0px);
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --bg:#16121D; --surface:#211A2A; --surface-2:#2C2338; --ink:#F2E7D0; --muted:#B5A8C0; --line:#3B3048;
+    --flame:#F2A03A;
+    --c-narr:#F2A03A; --c-hamp:#9BC27A; --c-jisk:#8FE6DF; --c-roz:#E8B95E; --c-splo:#5FC9B2; --c-boh:#E2915F;
+    color-scheme:dark;
+  }
+}
+:root[data-theme="dark"]{
+  --bg:#16121D; --surface:#211A2A; --surface-2:#2C2338; --ink:#F2E7D0; --muted:#B5A8C0; --line:#3B3048;
+  --flame:#F2A03A;
+  --c-narr:#F2A03A; --c-hamp:#9BC27A; --c-jisk:#8FE6DF; --c-roz:#E8B95E; --c-splo:#5FC9B2; --c-boh:#E2915F;
+  color-scheme:dark;
+}
+*,*::before,*::after{box-sizing:inherit}
+html{-webkit-text-size-adjust:100%;height:100%}
+body{margin:0;min-height:100%;background:var(--bg);color:var(--ink);font-family:var(--text);font-size:18px;line-height:1.5}
+body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset-top,0px);z-index:40;background:var(--bg)}
+button{font:inherit;color:inherit}
+:focus-visible{outline:3px solid var(--flame);outline-offset:2px}
+[hidden]{display:none !important}
+.wrap{max-width:760px;margin:0 auto;padding:0 18px}
+
+/* hlavička */
+header.top{position:sticky;top:env(safe-area-inset-top,0px);z-index:20;background:var(--bg);border-bottom:1px solid var(--line)}
+.top .row{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:12px 0 4px}
+.top h1{font-family:var(--display);font-weight:700;font-size:clamp(21px,5.2vw,30px);line-height:1.05;margin:0;color:var(--flame)}
+.meta{display:flex;flex-direction:column;align-items:flex-end;font-size:15px;color:var(--muted);font-variant-numeric:lining-nums tabular-nums;white-space:nowrap}
+#nextpair{color:var(--flame);font-weight:700}
+nav.tabs{display:flex;gap:6px;overflow-x:auto;padding:8px 0 12px;scrollbar-width:none}
+nav.tabs::-webkit-scrollbar{display:none}
+nav.tabs button{flex:0 0 auto;display:flex;align-items:center;gap:6px;font-size:16px;padding:7px 13px;border-radius:999px;border:1px solid var(--line);background:var(--surface);cursor:pointer}
+nav.tabs button[aria-selected="true"]{background:var(--tabc,var(--flame));color:var(--bg);border-color:transparent;font-weight:700}
+
+main{padding-bottom:150px}
+
+/* hlavní postava stanoviště */
+.hero{display:flex;gap:16px;align-items:center;margin:24px 0 8px}
+.hero .mark{flex:none;width:66px;height:66px;border-radius:50%;display:grid;place-items:center;font-size:34px;background:var(--surface-2);box-shadow:inset 0 0 0 2px var(--char)}
+.hero h2{font-family:var(--display);font-weight:700;font-size:clamp(32px,8vw,46px);line-height:1;margin:0;color:var(--char)}
+.hero .place{margin:6px 0 0;color:var(--muted);max-width:60ch}
+h3.sub{font-size:20px;margin:26px 0 4px;color:var(--char)}
+
+.cue{margin:14px 0;padding:2px 0 2px 14px;border-left:3px solid var(--char);color:var(--muted);font-style:italic;max-width:62ch}
+.tag{font-size:15px;color:var(--muted);font-style:italic;margin:0}
+
+/* replika */
+.line{display:grid;grid-template-columns:44px 1fr;gap:12px;align-items:start;width:100%;text-align:left;background:var(--surface);border:1px solid var(--line);border-radius:var(--r-lg);padding:14px 16px 14px 12px;margin:10px 0;cursor:pointer}
+.line:hover{border-color:var(--char)}
+.play{width:44px;height:44px;border-radius:50%;display:grid;place-items:center;background:var(--char);color:var(--bg);font-size:17px;line-height:1}
+.play .i-stop{display:none}
+.speaking .play .i-play{display:none}
+.speaking .play .i-stop{display:inline}
+.line .lbl{display:block;font-size:15px;font-weight:700;color:var(--char);margin-bottom:2px}
+.line .txt{display:block;max-width:64ch}
+.line .para{display:block}
+.line .para + .para{margin-top:8px}
+
+/* svíčkové světlo, když postava mluví */
+.speaking,.running{border-color:var(--char) !important;animation:flicker 2.6s infinite}
+@keyframes flicker{
+  0%,100%{box-shadow:0 0 0 1px var(--char),0 0 22px -6px var(--char)}
+  23%{box-shadow:0 0 0 1px var(--char),0 0 34px -2px var(--char)}
+  41%{box-shadow:0 0 0 1px var(--char),0 0 15px -7px var(--char)}
+  68%{box-shadow:0 0 0 1px var(--char),0 0 30px -3px var(--char)}
+}
+
+/* widgety */
+.widget,.qa{background:var(--surface);border:1px solid var(--line);border-radius:var(--r-lg);padding:14px 16px;margin:12px 0}
+.qa{border-radius:var(--r-sm);padding:12px 14px;margin:8px 0}
+.widget h3{margin:0 0 4px;font-size:20px;color:var(--char)}
+.qa .q{margin:0 0 10px;max-width:62ch}
+.ans{margin:10px 0 0;font-weight:700;color:var(--char)}
+.acts{display:flex;gap:8px;flex-wrap:wrap}
+.btn{font-size:16px;padding:8px 15px;min-height:42px;border-radius:999px;border:1px solid var(--line);background:var(--surface-2);cursor:pointer}
+.btn:hover{border-color:var(--char)}
+.btn.primary{background:var(--char);color:var(--bg);border-color:transparent;font-weight:700}
+.btn.small{font-size:15px;padding:4px 12px;min-height:34px}
+.btn[aria-pressed="true"]{background:var(--char);color:var(--bg);border-color:transparent;font-weight:700}
+.btn:disabled{opacity:.5;cursor:default}
+.trow{display:flex;gap:20px;align-items:center;flex-wrap:wrap;margin-top:10px}
+.digits{font-weight:700;font-size:54px;line-height:1;color:var(--char);font-variant-numeric:lining-nums tabular-nums;min-width:3.6ch}
+.opts{display:flex;gap:6px;flex-wrap:wrap;margin-top:10px;align-items:center}
+.pstatus{margin:0 0 8px}
+.steps{margin:10px 0 12px;padding-left:24px;color:var(--muted)}
+.steps li{margin:2px 0}
+.steps li.cur{color:var(--char);font-weight:700}
+.namegen-out{font-family:var(--display);font-size:40px;line-height:1.1;margin:12px 0 0;color:var(--char);min-height:1.1em}
+
+/* zvuky */
+.sfxrow{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin:22px 0 8px}
+.chip{display:inline-flex;align-items:center;gap:6px;font-size:15px;padding:6px 12px;min-height:38px;border-radius:999px;border:1px solid var(--line);background:var(--surface);cursor:pointer}
+.chip:hover{border-color:var(--flame)}
+.board{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:10px;margin-top:16px}
+.board .chip{flex-direction:column;justify-content:center;border-radius:var(--r-lg);padding:18px 10px;font-size:17px;min-height:110px}
+.board .chip .e{font-size:34px;line-height:1}
+.nextst{margin:30px 0 0}
+
+/* nastavení */
+.set{background:var(--surface);border:1px solid var(--line);border-radius:var(--r-lg);padding:14px 16px;margin:12px 0}
+.set h3{margin:0 0 6px;font-size:20px;color:var(--char)}
+.set label{display:block;font-size:16px;margin:10px 0 2px;color:var(--muted)}
+.set label output{color:var(--ink);font-variant-numeric:lining-nums tabular-nums}
+select{width:100%;font:inherit;font-size:16px;padding:8px 10px;border-radius:10px;border:1px solid var(--line);background:var(--surface-2);color:var(--ink)}
+input[type=range]{width:100%;accent-color:var(--char)}
+.set .acts{margin-top:12px}
+
+/* spodní lišta */
+.nowbar{position:fixed;left:0;right:0;bottom:0;z-index:30;background:var(--surface);border-top:1px solid var(--line);padding:10px 0 calc(10px + env(safe-area-inset-bottom,0px))}
+.nowbar .wrap{display:flex;flex-wrap:wrap;align-items:center;gap:8px 12px}
+.now{flex:1 1 260px;min-width:0;display:flex;align-items:center;gap:8px}
+.now .who{font-weight:700;color:var(--char);white-space:nowrap}
+.now .what{color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;min-width:0}
+.now .dot{flex:none;width:10px;height:15px;border-radius:50% 50% 50% 50%/62% 62% 38% 38%;background:var(--line)}
+.now.on .dot{background:radial-gradient(ellipse at 50% 75%,#FFF3C4 0%,#FFC34D 40%,#F07A1A 75%);animation:dance 1.4s ease-in-out infinite;transform-origin:50% 90%}
+.ctrls{display:flex;gap:8px}
+.btn.stop{font-weight:700}
+
+/* úvodní obrazovka */
+.start{position:fixed;inset:0;z-index:60;background:var(--bg);display:grid;place-items:center;padding:28px 22px;overflow:auto}
+.start .card{max-width:560px}
+.start h1{font-family:var(--display);font-weight:700;font-size:clamp(44px,11vw,72px);line-height:.95;color:var(--flame);margin:0 0 18px}
+.start p{max-width:54ch}
+.vstatus{color:var(--muted);font-style:italic}
+.btn.big{font-size:18px;padding:12px 22px;min-height:52px}
+.flame{position:relative;width:36px;height:58px;margin:0 0 26px 8px}
+.flame::before{content:"";position:absolute;inset:0;border-radius:50% 50% 50% 50%/62% 62% 38% 38%;background:radial-gradient(ellipse at 50% 76%,#FFF6D2 0%,#FFC94F 34%,#F2811E 68%,rgba(242,129,30,0) 72%);box-shadow:0 0 46px 12px rgba(255,166,56,.28);animation:dance 2.6s ease-in-out infinite;transform-origin:50% 92%}
+.flame::after{content:"";position:absolute;left:50%;bottom:-12px;width:3px;height:14px;border-radius:2px;background:var(--ink);transform:translateX(-50%)}
+@keyframes dance{
+  0%,100%{transform:scale(1,1) rotate(-1deg)}
+  25%{transform:scale(.93,1.07) rotate(2deg)}
+  50%{transform:scale(1.04,.95) rotate(-2deg)}
+  75%{transform:scale(.97,1.04) rotate(1deg)}
+}
+@media (prefers-reduced-motion: reduce){
+  .speaking,.running{animation:none;box-shadow:0 0 0 2px var(--char)}
+  .flame::before,.now.on .dot{animation:none}
+}
+@media (min-width:720px){ body{font-size:19px} }
+</style>
+</head>
+<body>
+
+<div class="start" id="start">
+  <div class="card">
+    <div class="flame" aria-hidden="true"></div>
+    <h1>Hampejzníkova halloweenská noc</h1>
+    <p>Ovladač hry pro dospělé. Klepnete na repliku a postava promluví svým hlasem. V pozadí hraje strašidelná hudba a občas zahouká sova nebo zavrzají dveře.</p>
+    <p class="vstatus" id="startVoice">Hledám české hlasy…</p>
+    <div class="acts">
+      <button class="btn primary big" id="goMusic">Spustit s hudbou</button>
+      <button class="btn big" id="goQuiet">Spustit bez hudby</button>
+    </div>
+  </div>
+</div>
+
+<header class="top">
+  <div class="wrap">
+    <div class="row">
+      <h1>Hampejzníkova halloweenská noc</h1>
+      <div class="meta"><span id="clock"></span><span id="nextpair" hidden></span></div>
+    </div>
+    <nav class="tabs" id="tabs" role="tablist" aria-label="Části hry"></nav>
+  </div>
+</header>
+
+<main class="wrap" id="main"></main>
+
+<div class="nowbar">
+  <div class="wrap">
+    <div class="now" id="now" aria-live="polite"><span class="dot" aria-hidden="true"></span><span class="who">Ticho</span><span class="what">Klepněte na repliku a postava promluví.</span></div>
+    <div class="ctrls">
+      <button class="btn toggle" id="tMusic" aria-pressed="false">Hudba</button>
+      <button class="btn toggle" id="tRandom" aria-pressed="false">Zvuky</button>
+      <button class="btn stop" id="bStop">Zastavit</button>
+    </div>
+  </div>
+</div>
+
+<noscript><p class="wrap">Ovladač potřebuje zapnutý JavaScript.</p></noscript>
+
+<script>
+(function () {
+'use strict';
+
+/* ---------- pomocné funkce ---------- */
+var LS = 'hampejznik-ovladac-v1';
+function $(s, el) { return (el || document).querySelector(s); }
+function $$(s, el) { return Array.prototype.slice.call((el || document).querySelectorAll(s)); }
+function h(tag, attrs) {
+  var el = document.createElement(tag);
+  if (attrs) {
+    Object.keys(attrs).forEach(function (k) {
+      var v = attrs[k];
+      if (v == null || v === false) return;
+      if (k === 'class') el.className = v;
+      else if (k.slice(0, 2) === 'on' && typeof v === 'function') el.addEventListener(k.slice(2), v);
+      else el.setAttribute(k, v === true ? '' : String(v));
+    });
+  }
+  var kids = Array.prototype.slice.call(arguments, 2);
+  (function add(list) {
+    list.forEach(function (kid) {
+      if (kid == null || kid === false) return;
+      if (Array.isArray(kid)) { add(kid); return; }
+      el.append(kid instanceof Node ? kid : document.createTextNode(String(kid)));
+    });
+  })(kids);
+  return el;
+}
+function sleep(ms) { return new Promise(function (r) { setTimeout(r, ms); }); }
+function rand(a, b) { return a + Math.random() * (b - a); }
+function pick(a) { return a[Math.floor(Math.random() * a.length)]; }
+function clamp(v, a, b) { return Math.min(b, Math.max(a, v)); }
+function mtof(m) { return 440 * Math.pow(2, (m - 69) / 12); }
+function pad2(n) { return String(n).padStart(2, '0'); }
+function fmt(s) {
+  s = Math.max(0, Math.floor(s));
+  var hh = Math.floor(s / 3600), m = Math.floor((s % 3600) / 60), ss = s % 60;
+  return hh ? hh + ':' + pad2(m) + ':' + pad2(ss) : m + ':' + pad2(ss);
+}
+function plural(n, one, few, many) { return n === 1 ? one : (n >= 2 && n <= 4 ? few : many); }
+
+/* ---------- postavy ---------- */
+var CHARS = {
+  vypravecka: { name: 'Vypravěčka', short: 'Vypravěčka', emoji: '📜', gender: 'f', pitch: 1.0, rate: 1.0, color: 'var(--c-narr)' },
+  hampejznik: { name: 'Skřítek Hampejzník', short: 'Hampejzník', emoji: '🧝', gender: 'm', pitch: 0.55, rate: 0.8, color: 'var(--c-hamp)' },
+  jiskricka: { name: 'Bludička Jiskřička', short: 'Jiskřička', emoji: '✨', gender: 'f', pitch: 1.75, rate: 1.12, color: 'var(--c-jisk)' },
+  rozarka: { name: 'Sova Rozárka', short: 'Rozárka', emoji: '🦉', gender: 'f', pitch: 1.2, rate: 0.86, color: 'var(--c-roz)' },
+  splouchal: { name: 'Vodník Šplouchal', short: 'Šplouchal', emoji: '🐸', gender: 'm', pitch: 0.8, rate: 0.92, color: 'var(--c-splo)' },
+  bohous: { name: 'Hejkal Bohouš', short: 'Bohouš', emoji: '🌳', gender: 'm', pitch: 1.05, rate: 1.15, color: 'var(--c-boh)' }
+};
+
+/* ---------- scénář ---------- */
+var LETTER = 'Moje milé příšerky,\n\n' +
+  'píše vám skřítek Hampejzník. Je mi tři sta let a bydlím ve staré chalupě na Červené vodě. Každý rok o halloweenské noci míchám kouzelné lektvary.\n\n' +
+  'Letos mám ale potíž. Jsem už starý skřítek, všechno zapomínám a doma mám takový hampejz, že nic nenajdu. Proto hledám malé alchymisty, kteří mi pomůžou. Lektvar se ale povede jen tomu, kdo projde zkouškou alchymisty.\n\n' +
+  'Moje kamarádka bludička Jiskřička vám rozsvítila svíčkovou cestičku. Čekají vás na ní čtyři zkoušky: zapamatovat si obrázky, uhodnout hádanky, poradit si s kvízem o přírodě a doběhnout pro kouzelnou větvičku.\n\n' +
+  'Choďte po dvojicích, velký a malý se drží za ruku. Dávejte pozor na svíčky i na sebe navzájem. V chalupě vám nechám vzkazy, co dál.\n\n' +
+  'Váš skřítek Hampejzník.';
+
+var STATIONS = [
+  { id: 'uvod', tab: 'Úvod', emoji: '📜', char: 'hampejznik', title: 'Dopis od Hampejzníka',
+    place: 'Doma, se všemi dětmi najednou. Potom se pouštějí dvojice.',
+    items: [
+      { t: 'cue', text: 'Pusťte dopis všem dětem. Pak je rozdělte do tří dvojic, vždy starší a mladší, a pouštějte je po 4–5 minutách.' },
+      { t: 'line', c: 'hampejznik', label: 'Dopis od Hampejzníka', sfx: 'creak', text: LETTER },
+      { t: 'line', c: 'vypravecka', label: 'Rozdělení do dvojic', text: 'Moje milé příšerky, rozdělte se do dvojic. Velký a malý se drží za ruku. První dvojice může vyrazit!' },
+      { t: 'pairs' },
+      { t: 'sfx', list: ['creak', 'owl', 'bell'] }
+    ] },
+  { id: 'zahrada', tab: 'Zahrada', num: 1, char: 'jiskricka', title: 'Bludička Jiskřička',
+    place: '1. zkouška na zahradě u svíčky: zapamatovat si co nejvíc obrázků.',
+    items: [
+      { t: 'cue', text: 'Obrázky rozložte u svíčky a utěrku mějte po ruce. Pro tříleté stačí 6 obrázků.' },
+      { t: 'line', c: 'jiskricka', label: 'Přivítání', sfx: 'sparkle', text: 'Moje milé příšerky! Já jsem bludička Jiskřička a rozsvítila jsem vám svíčkovou cestičku. Na svých nočních toulkách jsem viděla spoustu věcí. Zapamatujete si jich co nejvíc?' },
+      { t: 'timer', c: 'jiskricka', seconds: 30, options: [20, 30, 45],
+        startText: 'Dívejte se dobře! Počítám do třiceti.',
+        endText: 'Konec! Teď obrázky zakryju. Co jste si zapamatovali? Nejdřív ten menší.' },
+      { t: 'cue', text: 'Zakryjte obrázky utěrkou. Děti hned říkají, co si pamatují: nejdřív mladší, starší doplní. Pak obrázky odkryjte a zkontrolujte.' },
+      { t: 'line', c: 'jiskricka', label: 'Pochvala', sfx: 'sparkle', text: 'To je ale paměť! Takové chytré příšerky jsem ještě neviděla.' },
+      { t: 'h', text: 'Tudy ne, Jiskřičko!' },
+      { t: 'cue', text: 'Jiskřička se schválně plete a děti ji opravují.' },
+      { t: 'line', c: 'jiskricka', label: 'Špatná cesta, poprvé', text: 'A teď vám ukážu cestu. Tudy… do toho keře!' },
+      { t: 'line', c: 'jiskricka', label: 'Špatná cesta, podruhé', text: 'Že ne? Tak tudy… rovnou do nebe!' },
+      { t: 'line', c: 'jiskricka', label: 'Odchod k sově', text: 'Ach jo, já se pořád pletu. Jděte po svíčkách kolem chaty. První zastávku má sova Rozárka.' },
+      { t: 'sfx', list: ['sparkle', 'gust', 'owl'] }
+    ] },
+  { id: 'hadanky', tab: 'Hádanky', num: 2, char: 'rozarka', title: 'Sova Rozárka',
+    place: '2. zkouška na první zastávce u chaty: hádanky.',
+    items: [
+      { t: 'line', c: 'rozarka', label: 'Přivítání', sfx: 'owl', text: 'Hú, hú! Moje milé příšerky, já jsem sova Rozárka, nejmoudřejší sova v celém lese. Mám ráda hádanky. Kdo zná odpověď, zahouká: hú, hú!' },
+      { t: 'cue', text: 'Na dvojici stačí 3–4 hádanky. Mladší hádá první, starší napovídá. Odpověď pusťte, až děti zkusí hádat.' },
+      { t: 'riddle', q: 'Je kulatá, oranžová a na Halloween má v hlavě svíčku.', a: 'dýně', say: 'Hú, hú, správně! Je to dýně.' },
+      { t: 'riddle', q: 'Ve dne spí hlavou dolů, v noci lítá potmě.', a: 'netopýr', say: 'Hú, hú, správně! Je to netopýr.' },
+      { t: 'riddle', q: 'Má osm nohou a plete sítě.', a: 'pavouk', say: 'Hú, hú, správně! Je to pavouk.' },
+      { t: 'riddle', q: 'Má na zádech bodliny a v zimě spí v listí.', a: 'ježek', say: 'Hú, hú, správně! Je to ježek.' },
+      { t: 'riddle', q: 'V noci houká na stromě a má velké kulaté oči.', a: 'sova', say: 'Hú, hú! To jsem přece já!' },
+      { t: 'riddle', older: true, q: 'Má čepičku, ale hlavu nemá, a padá z dubu.', a: 'žalud', say: 'Hú, hú, správně! Je to žalud.' },
+      { t: 'riddle', older: true, q: 'Má jehličí místo listí a v zimě zůstává zelený.', a: 'smrk, jedle nebo borovice', say: 'Hú, hú, správně! Je to jehličnatý strom, třeba smrk, jedle nebo borovice.' },
+      { t: 'riddle', older: true, q: 'V zimě je bílý a studený a v horách na něm jezdíme na lyžích.', a: 'sníh', say: 'Hú, hú, správně! Je to sníh.' },
+      { t: 'line', c: 'rozarka', label: 'Odchod k vodníkovi', text: 'Hú, hú! Jste moudří skoro jako já. Pokračujte po svíčkách, na další zastávce na vás čeká vodník Šplouchal.' },
+      { t: 'sfx', list: ['owl', 'bats', 'gust'] }
+    ] },
+  { id: 'kviz', tab: 'Kvíz', num: 3, char: 'splouchal', title: 'Vodník Šplouchal',
+    place: '3. zkouška na druhé zastávce u chaty: kvíz o přírodě a horách.',
+    items: [
+      { t: 'line', c: 'splouchal', label: 'Přivítání', sfx: 'splash', text: 'Žbluňk! Moje milé příšerky, já jsem vodník Šplouchal z Červené vody, soused skřítka Hampejzníka. Znám každou rybičku, každý strom i každou horu. Uvidíme, jestli vy taky!' },
+      { t: 'line', c: 'splouchal', label: 'Pravidla', text: 'Budu říkat věty. Když je to pravda, zakvákejte: kvák, kvák! Když to pravda není, zavolejte žbluňk a dřepněte si.' },
+      { t: 'cue', text: 'Na dvojici stačí 5–6 vět. Odpověď pusťte, až děti zakvákají nebo udělají žbluňk.' },
+      { t: 'tf', q: 'Ježek přespí zimu v hromadě listí.', truth: true, say: 'Pravda! Ježek se zachumlá do listí a spí až do jara.' },
+      { t: 'tf', q: 'Ryby bydlí v korunách stromů.', truth: false, say: 'Žbluňk! Nesmysl, ryby bydlí u mě ve vodě!' },
+      { t: 'tf', q: 'Veverka si na zimu schovává oříšky.', truth: true, say: 'Pravda! A někdy pak zapomene, kam je schovala.' },
+      { t: 'tf', q: 'Šiška roste na dubu.', truth: false, say: 'Žbluňk, nepravda! Šišky rostou na smrku a na borovici, na dubu rostou žaludy.' },
+      { t: 'tf', q: 'Na podzim padá ze stromů listí.', truth: true, say: 'Pravda! Proto je teď všude tolik barevného listí.' },
+      { t: 'tf', q: 'Nahoře na horách je větší zima než dole v údolí.', truth: true, say: 'Pravda! Proto tam déle leží sníh.' },
+      { t: 'tf', q: 'Kamzík umí skákat po skalách vysoko v horách.', truth: true, say: 'Pravda! Kamzík skáče po skalách líp než já ve vodě.' },
+      { t: 'tf', q: 'Nejvyšší hora Česka je Sněžka.', truth: true, say: 'Pravda! Sněžka měří přes tisíc šest set metrů.' },
+      { t: 'line', c: 'splouchal', label: 'Odchod k hejkalovi', sfx: 'splash', text: 'Žbluňk! Výborně, i ryby by vám tleskaly. Poslední zastávku má hejkal Bohouš u velkého stromu.' },
+      { t: 'sfx', list: ['splash', 'frogs', 'gust'] }
+    ] },
+  { id: 'strom', tab: 'Strom', num: 4, char: 'bohous', title: 'Hejkal Bohouš',
+    place: '4. zkouška na třetí zastávce u velkého stromu: hejkalí dráha.',
+    items: [
+      { t: 'cue', text: 'Pod stromem mějte předem 6 větviček. Dráhu pouštějte krok po kroku, jak děti stíhají.' },
+      { t: 'line', c: 'bohous', label: 'Přivítání', sfx: 'gust', text: 'Hej, hej! Moje milé příšerky, já jsem hejkal Bohouš a bydlím v tom velkém stromě. Kouzelné větvičky dávám jen tomu, kdo zvládne moji hejkalí dráhu. Když zavolám hej, odpovězte mi hej!' },
+      { t: 'seq', c: 'bohous', label: 'Ozvěna', note: 'Dvakrát potichu, potřetí nahlas. Děti po každém hej odpovídají.', steps: [
+        { say: 'Hej!', vol: 0.45, wait: 1900 }, { say: 'Hej!', vol: 0.45, wait: 1900 }, { say: 'HEJ!', vol: 1, wait: 1600 }, { say: 'To je ozvěna!' }
+      ] },
+      { t: 'line', c: 'bohous', label: 'Běh ke stromu', text: 'Teď běžte ke stromu! Starší běží tak, aby mladší stačil.' },
+      { t: 'seq', c: 'bohous', label: 'Tři dřepy', note: 'Bohouš počítá, děti dřepují.', steps: [
+        { say: 'Tři dřepy! Počítejte se mnou.', wait: 600 }, { say: 'Jedna!', wait: 1500 }, { say: 'Dvě!', wait: 1500 }, { say: 'Tři!', wait: 700 }, { say: 'Hej, výborně!' }
+      ] },
+      { t: 'line', c: 'bohous', label: 'Kolečko kolem stromu', text: 'Teď oběhněte strom třikrát dokola. Jednou zleva a dvakrát zprava!' },
+      { t: 'line', c: 'bohous', label: 'Objetí stromu', text: 'Obejměte můj strom a pošeptejte mu, jaký lektvar chcete uvařit.' },
+      { t: 'line', c: 'bohous', label: 'Větvička', text: 'Pod stromem leží kouzelné větvičky. Každý si vezměte jednu!' },
+      { t: 'h', text: 'Zpátky jako zvířátka' },
+      { t: 'line', c: 'bohous', label: 'Jako zajíci', text: 'Zpátky ke mně jako zajíci! Hop, hop, hop!' },
+      { t: 'line', c: 'bohous', label: 'Jako čápi', text: 'Zpátky ke mně jako čápi! Kolena pěkně vysoko!' },
+      { t: 'line', c: 'bohous', label: 'Jako myšky', text: 'Zpátky ke mně jako myšky! Po špičkách, potichoučku.' },
+      { t: 'h', text: 'Hejkalova zmrazovačka' },
+      { t: 'seq', c: 'bohous', label: 'Zmrazovačka sama', note: 'Na hou děti tancují, na hej zamrznou. Tři kola, naposledy strašidelná socha.', steps: [
+        { say: 'Hejkalova zmrazovačka! Když zavolám hou, tancujte. Když zavolám hej, zamrzněte jako sochy!', wait: 900 },
+        { say: 'Hou!', sfx: 'bats', wait: [3500, 6000] }, { say: 'Hej!', wait: 3000 },
+        { say: 'Hou!', sfx: 'bats', wait: [3000, 5500] }, { say: 'Hej!', wait: 3000 },
+        { say: 'Hou!', sfx: 'bats', wait: [3000, 5000] },
+        { say: 'A naposledy… hej! Zamrzněte v té nejstrašidelnější póze!', wait: 2500 },
+        { say: 'Brrr, to jsou ale strašidelné sochy!' }
+      ] },
+      { t: 'quick', c: 'bohous', note: 'Nebo ručně:', list: [
+        { label: 'Hou! Tancovat', say: 'Hou!', sfx: 'bats' },
+        { label: 'Hej! Zamrznout', say: 'Hej!' }
+      ] },
+      { t: 'line', c: 'bohous', label: 'Odchod do chalupy', text: 'Hej, to bylo rychlé! Tyhle větvičky jsou kouzelné, v chalupě s nimi budete míchat lektvar. Svíčky vás dovedou až ke dveřím Hampejzníkovy chalupy.' },
+      { t: 'sfx', list: ['gust', 'wolf', 'owl'] }
+    ] },
+  { id: 'chalupa', tab: 'Chalupa', num: 5, char: 'hampejznik', title: 'Skřítek Hampejzník',
+    place: 'Chalupa: hmatová krabice a kouzelné lektvary. Hampejzník tu není, mluví jen přes vzkazy.',
+    items: [
+      { t: 'line', c: 'hampejznik', label: 'Vzkaz 1, pro každou dvojici, která dorazí', sfx: 'creak', text: 'Moje milé příšerky! Vítejte v mé chalupě. Promiňte ten hampejz a promiňte, že tu nejsem. Zase jsem někde zapomněl brýle a šel jsem je hledat do lesa. Do krabice jsem naházel věci na lektvary, ale už nevím, co tam je. Poznáte to? Jen hmatem, kdo se podívá, tomu kouzlo uteče!' },
+      { t: 'cue', text: 'Dítě strčí ruku pod utěrku, nahmatá věc a hádá. Když uhodne, věc vytáhněte a dejte jí kouzelné jméno. Každé dítě hádá 2–3 věci.' },
+      { t: 'namegen' },
+      { t: 'cue', text: 'Až dorazí poslední dvojice, posaďte všechny ke stolu. Lektvary míchejte podle svého receptu.' },
+      { t: 'line', c: 'hampejznik', label: 'Vzkaz 2, před mícháním', sfx: 'bell1', text: 'Moje milé příšerky, prošli jste všemi zkouškami a teď jste opravdoví alchymisté. Míchejte větvičkou od hejkala Bohouše a nezapomeňte zaklínadlo!' },
+      { t: 'seq', c: 'hampejznik', label: 'Zaklínadlo po řádcích', note: 'Hampejzník řekne řádek, děti ho zopakují a míchají větvičkou.', steps: [
+        { say: 'Opakujte po mně, moje milé příšerky!', wait: 900 },
+        { say: 'Míchám, míchám větvičkou,', wait: 3300 },
+        { say: 'barvičkou a kapičkou,', wait: 3300 },
+        { say: 'čáry, máry, bublinka,', wait: 3300 },
+        { say: 'hotová je kouzlinka!', wait: 2800 },
+        { sfx: 'bubbles', wait: 1600 }, { sfx: 'sparkle' }
+      ] },
+      { t: 'line', c: 'hampejznik', label: 'Poslední přísada', sfx: 'bubbles', text: 'A teď poslední přísada: kapka Červené vody z mé studánky!' },
+      { t: 'line', c: 'hampejznik', label: 'Jméno lektvaru', text: 'A jak se jmenuje tvůj lektvar? Vymysli mu pořádně kouzelné jméno!' },
+      { t: 'line', c: 'hampejznik', label: 'Pasování, pro každé dítě zvlášť', after: 'sparkle', text: 'Já, skřítek Hampejzník, tě pasuji na Mistra alchymistu halloweenské noci!' },
+      { t: 'line', c: 'hampejznik', label: 'Vzkaz 3, rozloučení', sfx: 'bell', text: 'Moje milé příšerky, děkuju vám! Brýle jsem pořád nenašel, ale vy jste byli úžasní alchymisté. Na příští Halloween se těším!' },
+      { t: 'sfx', list: ['bubbles', 'creak', 'sparkle', 'bell'] }
+    ] }
+];
+
+var ADJ = ['netopýří', 'dračí', 'pavoučí', 'soví', 'žabí', 'hadí', 'skřítčí', 'vlčí', 'kočičí', 'ještěrčí', 'myší', 'půlnoční', 'měsíční', 'hejkalí'];
+
+/* ---------- nastavení ---------- */
+function defaults() {
+  var chars = {};
+  Object.keys(CHARS).forEach(function (k) { chars[k] = { pitch: CHARS[k].pitch, rate: CHARS[k].rate }; });
+  return { musicVol: 0.5, sfxVol: 0.8, speechVol: 1, musicOn: true, randomOn: true, randomFreq: 'obcas', chars: chars, voices: {} };
+}
+function loadSettings() {
+  var d = defaults();
+  try {
+    var raw = localStorage.getItem(LS);
+    if (!raw) return d;
+    var s = JSON.parse(raw);
+    var out = Object.assign({}, d, s);
+    out.chars = Object.assign({}, d.chars);
+    Object.keys(s.chars || {}).forEach(function (k) { if (out.chars[k]) out.chars[k] = Object.assign({}, out.chars[k], s.chars[k]); });
+    out.voices = Object.assign({}, s.voices || {});
+    return out;
+  } catch (e) { return d; }
+}
+var settings = loadSettings();
+function save() { try { localStorage.setItem(LS, JSON.stringify(settings)); } catch (e) { /* bez ukládání */ } }
+
+/* ---------- zvukový engine ---------- */
+var A = {
+  ctx: null, musicBus: null, sfxBus: null, noise: null,
+  init: function () {
+    if (this.ctx) return;
+    var AC = window.AudioContext || window.webkitAudioContext;
+    if (!AC) return;
+    var c = this.ctx = new AC();
+    var comp = c.createDynamicsCompressor();
+    comp.threshold.value = -16; comp.knee.value = 12; comp.ratio.value = 5; comp.attack.value = 0.004; comp.release.value = 0.25;
+    comp.connect(c.destination);
+    var verb = c.createConvolver(); verb.buffer = impulse(c, 3.4, 2.6);
+    var vOut = c.createGain(); vOut.gain.value = 0.6; verb.connect(vOut); vOut.connect(comp);
+    this.musicBus = c.createGain(); this.musicBus.gain.value = 0; this.musicBus.connect(comp);
+    var ms = c.createGain(); ms.gain.value = 0.9; this.musicBus.connect(ms); ms.connect(verb);
+    this.sfxBus = c.createGain(); this.sfxBus.gain.value = settings.sfxVol; this.sfxBus.connect(comp);
+    var ss = c.createGain(); ss.gain.value = 0.45; this.sfxBus.connect(ss); ss.connect(verb);
+    this.noise = makeNoise(c, 4);
+  },
+  resume: function () { if (this.ctx && this.ctx.state !== 'running') this.ctx.resume().catch(function () {}); },
+  applyMusic: function () {
+    if (!this.ctx) return;
+    var ducked = !!Speech.current;
+    this.musicBus.gain.setTargetAtTime(settings.musicVol * (ducked ? 0.3 : 1), this.ctx.currentTime, ducked ? 0.15 : 0.7);
+  },
+  applySfx: function () { if (this.ctx) this.sfxBus.gain.setTargetAtTime(settings.sfxVol, this.ctx.currentTime, 0.1); }
+};
+function impulse(c, dur, decay) {
+  var rate = c.sampleRate, len = Math.floor(rate * dur), buf = c.createBuffer(2, len, rate);
+  for (var ch = 0; ch < 2; ch++) {
+    var d = buf.getChannelData(ch);
+    for (var i = 0; i < len; i++) d[i] = (Math.random() * 2 - 1) * Math.pow(1 - i / len, decay);
+  }
+  return buf;
+}
+function makeNoise(c, dur) {
+  var len = Math.floor(c.sampleRate * dur), buf = c.createBuffer(1, len, c.sampleRate), d = buf.getChannelData(0);
+  for (var i = 0; i < len; i++) d[i] = Math.random() * 2 - 1;
+  return buf;
+}
+function env(g, t, a, peak, hold, rel) {
+  g.gain.setValueAtTime(0.0001, t);
+  g.gain.exponentialRampToValueAtTime(peak, t + a);
+  g.gain.setValueAtTime(peak, t + a + hold);
+  g.gain.exponentialRampToValueAtTime(0.0001, t + a + hold + rel);
+}
+function noiseSrc(t, dur) {
+  var s = A.ctx.createBufferSource(); s.buffer = A.noise; s.loop = true;
+  s.start(t, Math.random() * 3); s.stop(t + dur);
+  return s;
+}
+function bellStrike(t, d, base, amp) {
+  var c = A.ctx;
+  [[0.5, 0.5, 7], [1, 1, 5.5], [1.19, 0.45, 4], [1.56, 0.35, 3.2], [2, 0.4, 2.8], [2.51, 0.25, 2.2], [2.66, 0.2, 2], [3.01, 0.18, 1.7], [4.1, 0.12, 1.2]].forEach(function (p) {
+    var o = c.createOscillator(); o.type = 'sine'; o.frequency.value = base * p[0];
+    var g = c.createGain();
+    g.gain.setValueAtTime(0.0001, t); g.gain.exponentialRampToValueAtTime(amp * p[1], t + 0.006); g.gain.exponentialRampToValueAtTime(0.0001, t + p[2]);
+    o.connect(g); g.connect(d); o.start(t); o.stop(t + p[2] + 0.05);
+  });
+}
+
+var SFX = {
+  owl: { label: 'Sova', e: '🦉', fn: function (t, d) {
+    var c = A.ctx;
+    function hoot(st, len, f0, f1, amp) {
+      var o = c.createOscillator(); o.type = 'sine';
+      o.frequency.setValueAtTime(f0, st); o.frequency.linearRampToValueAtTime(f1, st + len);
+      var v = c.createOscillator(); v.frequency.value = 5.5; var vg = c.createGain(); vg.gain.value = 5; v.connect(vg); vg.connect(o.frequency);
+      var g = c.createGain(); env(g, st, 0.05, amp, Math.max(0.01, len - 0.17), 0.12);
+      o.connect(g); g.connect(d); o.start(st); v.start(st); o.stop(st + len + 0.1); v.stop(st + len + 0.1);
+    }
+    hoot(t, 0.3, 430, 405, 0.5); hoot(t + 0.62, 0.16, 410, 400, 0.35); hoot(t + 0.92, 0.7, 420, 380, 0.45);
+    return 1.8;
+  } },
+  wolf: { label: 'Vlk', e: '🐺', fn: function (t, d) {
+    var c = A.ctx, o = c.createOscillator(); o.type = 'sawtooth';
+    var f = o.frequency;
+    f.setValueAtTime(240, t); f.exponentialRampToValueAtTime(480, t + 0.8); f.linearRampToValueAtTime(540, t + 2.1); f.exponentialRampToValueAtTime(260, t + 3.4);
+    var v = c.createOscillator(); v.frequency.value = 5; var vg = c.createGain();
+    vg.gain.setValueAtTime(0, t); vg.gain.linearRampToValueAtTime(14, t + 2.2); v.connect(vg); vg.connect(f);
+    var bp = c.createBiquadFilter(); bp.type = 'bandpass'; bp.frequency.value = 800; bp.Q.value = 1.4;
+    var lp = c.createBiquadFilter(); lp.type = 'lowpass'; lp.frequency.value = 1600;
+    var g = c.createGain(); g.gain.setValueAtTime(0.0001, t); g.gain.exponentialRampToValueAtTime(0.6, t + 0.5); g.gain.setValueAtTime(0.6, t + 2.4); g.gain.exponentialRampToValueAtTime(0.0001, t + 3.5);
+    o.connect(bp); bp.connect(lp); lp.connect(g); g.connect(d); o.start(t); v.start(t); o.stop(t + 3.6); v.stop(t + 3.6);
+    return 3.6;
+  } },
+  creak: { label: 'Vrzání dveří', e: '🚪', fn: function (t, d) {
+    var c = A.ctx, dur = 1.9, o = c.createOscillator(); o.type = 'sawtooth';
+    var f = o.frequency;
+    f.setValueAtTime(14, t); f.linearRampToValueAtTime(48, t + 0.45); f.linearRampToValueAtTime(26, t + 0.9); f.linearRampToValueAtTime(64, t + 1.35); f.linearRampToValueAtTime(18, t + dur);
+    var g = c.createGain(); g.gain.setValueAtTime(0.0001, t); g.gain.exponentialRampToValueAtTime(1, t + 0.12); g.gain.setValueAtTime(1, t + dur - 0.3); g.gain.exponentialRampToValueAtTime(0.0001, t + dur);
+    [[950, 9, 6], [1900, 12, 4], [2900, 14, 2.5]].forEach(function (p) {
+      var bp = c.createBiquadFilter(); bp.type = 'bandpass'; bp.frequency.value = p[0]; bp.Q.value = p[1];
+      var ga = c.createGain(); ga.gain.value = p[2];
+      o.connect(bp); bp.connect(ga); ga.connect(g);
+    });
+    g.connect(d); o.start(t); o.stop(t + dur + 0.05);
+    return dur;
+  } },
+  thunder: { label: 'Hrom', e: '⛈️', fn: function (t, d) {
+    var c = A.ctx, s = noiseSrc(t, 5.1);
+    var lp = c.createBiquadFilter(); lp.type = 'lowpass'; lp.Q.value = 0.7;
+    lp.frequency.setValueAtTime(3000, t); lp.frequency.exponentialRampToValueAtTime(140, t + 3);
+    var g = c.createGain();
+    g.gain.setValueAtTime(0.0001, t); g.gain.exponentialRampToValueAtTime(0.9, t + 0.02); g.gain.exponentialRampToValueAtTime(0.25, t + 0.35);
+    g.gain.linearRampToValueAtTime(0.6, t + 0.8); g.gain.linearRampToValueAtTime(0.3, t + 1.4); g.gain.linearRampToValueAtTime(0.45, t + 1.9); g.gain.exponentialRampToValueAtTime(0.0001, t + 5);
+    s.connect(lp); lp.connect(g); g.connect(d);
+    return 5;
+  } },
+  bats: { label: 'Netopýři', e: '🦇', fn: function (t, d) {
+    var c = A.ctx;
+    for (var i = 0; i < 16; i++) {
+      var st = t + Math.random() * 1.8, o = c.createOscillator(); o.type = 'sine';
+      var f0 = 6500 + Math.random() * 2500;
+      o.frequency.setValueAtTime(f0, st); o.frequency.exponentialRampToValueAtTime(f0 * 0.55, st + 0.035);
+      var g = c.createGain(); g.gain.setValueAtTime(0.0001, st); g.gain.exponentialRampToValueAtTime(0.18, st + 0.005); g.gain.exponentialRampToValueAtTime(0.0001, st + 0.045);
+      var out = g;
+      if (c.createStereoPanner) { var p = c.createStereoPanner(); p.pan.value = Math.random() * 2 - 1; g.connect(p); out = p; }
+      o.connect(g); out.connect(d); o.start(st); o.stop(st + 0.06);
+    }
+    return 2;
+  } },
+  gust: { label: 'Vítr', e: '🌬️', fn: function (t, d) {
+    var c = A.ctx, s = noiseSrc(t, 3.9);
+    var bp = c.createBiquadFilter(); bp.type = 'bandpass'; bp.Q.value = 1.6;
+    bp.frequency.setValueAtTime(300, t); bp.frequency.exponentialRampToValueAtTime(1400, t + 1.6); bp.frequency.exponentialRampToValueAtTime(350, t + 3.6);
+    var g = c.createGain(); g.gain.setValueAtTime(0.0001, t); g.gain.exponentialRampToValueAtTime(0.7, t + 1.4); g.gain.exponentialRampToValueAtTime(0.0001, t + 3.8);
+    s.connect(bp); bp.connect(g); g.connect(d);
+    return 3.8;
+  } },
+  splash: { label: 'Žbluňk', e: '💧', fn: function (t, d) {
+    var c = A.ctx, o = c.createOscillator(); o.type = 'sine';
+    o.frequency.setValueAtTime(680, t); o.frequency.exponentialRampToValueAtTime(130, t + 0.2);
+    var g = c.createGain(); g.gain.setValueAtTime(0.0001, t); g.gain.exponentialRampToValueAtTime(0.7, t + 0.01); g.gain.exponentialRampToValueAtTime(0.0001, t + 0.3);
+    o.connect(g); g.connect(d); o.start(t); o.stop(t + 0.32);
+    var s = noiseSrc(t, 0.55), hp = c.createBiquadFilter(); hp.type = 'highpass'; hp.frequency.value = 1800;
+    var ng = c.createGain(); ng.gain.setValueAtTime(0.0001, t + 0.02); ng.gain.exponentialRampToValueAtTime(0.35, t + 0.04); ng.gain.exponentialRampToValueAtTime(0.0001, t + 0.5);
+    s.connect(hp); hp.connect(ng); ng.connect(d);
+    for (var i = 0; i < 5; i++) {
+      var st = t + 0.3 + Math.random() * 0.7, p = c.createOscillator(); p.type = 'sine';
+      var f0 = 700 + Math.random() * 700;
+      p.frequency.setValueAtTime(f0, st); p.frequency.exponentialRampToValueAtTime(f0 * 1.9, st + 0.05);
+      var pg = c.createGain(); pg.gain.setValueAtTime(0.0001, st); pg.gain.exponentialRampToValueAtTime(0.18, st + 0.005); pg.gain.exponentialRampToValueAtTime(0.0001, st + 0.08);
+      p.connect(pg); pg.connect(d); p.start(st); p.stop(st + 0.1);
+    }
+    return 1.1;
+  } },
+  frogs: { label: 'Žáby', e: '🐸', fn: function (t, d) {
+    var c = A.ctx;
+    function croak(st, f) {
+      var o = c.createOscillator(); o.type = 'sawtooth';
+      o.frequency.setValueAtTime(f, st); o.frequency.linearRampToValueAtTime(f * 0.85, st + 0.3);
+      var am = c.createOscillator(); am.type = 'square'; am.frequency.value = 32;
+      var amg = c.createGain(); amg.gain.value = 0.5; var vca = c.createGain(); vca.gain.value = 0.5;
+      am.connect(amg); amg.connect(vca.gain);
+      var bp = c.createBiquadFilter(); bp.type = 'bandpass'; bp.frequency.value = 650; bp.Q.value = 2.5;
+      var g = c.createGain(); g.gain.setValueAtTime(0.0001, st); g.gain.exponentialRampToValueAtTime(1, st + 0.02); g.gain.setValueAtTime(1, st + 0.24); g.gain.exponentialRampToValueAtTime(0.0001, st + 0.34);
+      o.connect(bp); bp.connect(vca); vca.connect(g); g.connect(d);
+      o.start(st); am.start(st); o.stop(st + 0.36); am.stop(st + 0.36);
+    }
+    croak(t, 110); croak(t + 0.5, 100); croak(t + 1.25, 120);
+    return 1.7;
+  } },
+  sparkle: { label: 'Kouzlo', e: '✨', fn: function (t, d) {
+    var c = A.ctx, notes = [86, 89, 93, 96, 98, 101, 105];
+    for (var i = 0; i < 11; i++) {
+      var st = t + i * 0.065 + Math.random() * 0.03, o = c.createOscillator(); o.type = 'sine'; o.frequency.value = mtof(pick(notes));
+      var g = c.createGain(); g.gain.setValueAtTime(0.0001, st); g.gain.exponentialRampToValueAtTime(0.16, st + 0.004); g.gain.exponentialRampToValueAtTime(0.0001, st + 1.1);
+      o.connect(g); g.connect(d); o.start(st); o.stop(st + 1.15);
+    }
+    return 1.9;
+  } },
+  bubbles: { label: 'Bublání lektvaru', e: '🧪', fn: function (t, d) {
+    var c = A.ctx;
+    for (var i = 0; i < 18; i++) {
+      var st = t + Math.random() * 2.6, o = c.createOscillator(); o.type = 'sine';
+      var f0 = 220 + Math.random() * 420;
+      o.frequency.setValueAtTime(f0, st); o.frequency.exponentialRampToValueAtTime(f0 * 2.3, st + 0.07);
+      var g = c.createGain(); g.gain.setValueAtTime(0.0001, st); g.gain.exponentialRampToValueAtTime(0.32, st + 0.008); g.gain.exponentialRampToValueAtTime(0.0001, st + 0.09);
+      o.connect(g); g.connect(d); o.start(st); o.stop(st + 0.11);
+    }
+    return 2.8;
+  } },
+  bell: { label: 'Zvon o půlnoci', e: '🔔', fn: function (t, d) {
+    for (var i = 0; i < 3; i++) bellStrike(t + i * 2.2, d, 110, 0.3);
+    return 9;
+  } },
+  heart: { label: 'Tlukot srdce', e: '💓', fn: function (t, d) {
+    var c = A.ctx;
+    function thump(st, a) {
+      [[1, 'sine', 1], [2, 'triangle', 0.35]].forEach(function (p) {
+        var o = c.createOscillator(); o.type = p[1];
+        o.frequency.setValueAtTime(70 * p[0], st); o.frequency.exponentialRampToValueAtTime(38 * p[0], st + 0.16);
+        var g = c.createGain(); g.gain.setValueAtTime(0.0001, st); g.gain.exponentialRampToValueAtTime(a * p[2], st + 0.012); g.gain.exponentialRampToValueAtTime(0.0001, st + 0.26);
+        o.connect(g); g.connect(d); o.start(st); o.stop(st + 0.3);
+      });
+    }
+    for (var i = 0; i < 5; i++) { var st = t + i * 0.82; thump(st, 0.9); thump(st + 0.22, 0.6); }
+    return 4.2;
+  } },
+  bell1: { hidden: true, label: 'Zvon', e: '🔔', fn: function (t, d) { bellStrike(t, d, 147, 0.3); return 5; } },
+  tick: { hidden: true, label: 'Tik', e: '⏱️', fn: function (t, d) {
+    var c = A.ctx, s = noiseSrc(t, 0.06), bp = c.createBiquadFilter(); bp.type = 'bandpass'; bp.frequency.value = 2600; bp.Q.value = 3;
+    var g = c.createGain(); g.gain.setValueAtTime(0.0001, t); g.gain.exponentialRampToValueAtTime(0.6, t + 0.002); g.gain.exponentialRampToValueAtTime(0.0001, t + 0.05);
+    s.connect(bp); bp.connect(g); g.connect(d);
+    return 0.1;
+  } }
+};
+var SFX_LEAD = { creak: 1300, bell: 2000, bell1: 900, owl: 1500, splash: 600, sparkle: 700, gust: 1200, bubbles: 900 };
+
+function playSfx(name, level) {
+  if (!A.ctx || !SFX[name]) return;
+  A.resume();
+  var g = A.ctx.createGain(); g.gain.value = level == null ? 1 : level; g.connect(A.sfxBus);
+  var dur = SFX[name].fn(A.ctx.currentTime + 0.03, g) || 3;
+  setTimeout(function () { try { g.disconnect(); } catch (e) { /* už odpojeno */ } }, (dur + 1) * 1000);
+}
+
+/* ---------- strašidelná hudba (generovaná) ---------- */
+var BEAT = 0.46;
+var MELODY = [[74, 1], [77, 1], [81, 1], [80, 1], [81, 2], [77, 1], [76, 1], [74, 1], [73, 1], [74, 2], [70, 1], [74, 1], [77, 1], [76, 1], [73, 2], [69, 1], [73, 1], [76, 1], [74, 3]];
+var CHORDS = [[50, 53, 57], [45, 49, 52], [43, 46, 50], [45, 49, 52]];
+function musicBox(t, m, v) {
+  var c = A.ctx, f = mtof(m), g = c.createGain();
+  g.gain.setValueAtTime(0.0001, t); g.gain.exponentialRampToValueAtTime(0.085 * v, t + 0.006); g.gain.exponentialRampToValueAtTime(0.0001, t + 2.4);
+  var o1 = c.createOscillator(); o1.type = 'sine'; o1.frequency.value = f; o1.detune.value = (Math.random() - 0.5) * 14;
+  var o2 = c.createOscillator(); o2.type = 'sine'; o2.frequency.value = f * 3.01;
+  var g2 = c.createGain(); g2.gain.value = 0.12;
+  o1.connect(g); o2.connect(g2); g2.connect(g); g.connect(A.musicBus);
+  o1.start(t); o2.start(t); o1.stop(t + 2.5); o2.stop(t + 2.5);
+}
+function padChord(t, notes, dur, v) {
+  var c = A.ctx, lp = c.createBiquadFilter(); lp.type = 'lowpass'; lp.frequency.value = 700; lp.Q.value = 0.8;
+  var g = c.createGain(), a = 0.022 * v;
+  g.gain.setValueAtTime(0.0001, t); g.gain.exponentialRampToValueAtTime(a, t + 1.6); g.gain.setValueAtTime(a, t + dur - 0.6); g.gain.exponentialRampToValueAtTime(0.0001, t + dur + 0.9);
+  lp.connect(g); g.connect(A.musicBus);
+  notes.forEach(function (m) {
+    [-8, 8].forEach(function (dt) {
+      var o = c.createOscillator(); o.type = 'sawtooth'; o.frequency.value = mtof(m); o.detune.value = dt;
+      o.connect(lp); o.start(t); o.stop(t + dur + 1);
+    });
+  });
+}
+var Music = {
+  on: false, nodes: [], gains: [], iv: null, next: 0, idx: 0, beat: 0, loop: 0,
+  start: function () {
+    if (!A.ctx || this.on) return;
+    this.on = true;
+    var c = A.ctx, t = c.currentTime, self = this;
+    // hluboký bzučivý dron
+    var lp = c.createBiquadFilter(); lp.type = 'lowpass'; lp.frequency.value = 300; lp.Q.value = 3;
+    var lfo = c.createOscillator(); lfo.frequency.value = 0.05; var lg = c.createGain(); lg.gain.value = 140; lfo.connect(lg); lg.connect(lp.frequency);
+    var dg = c.createGain(); dg.gain.setValueAtTime(0.0001, t); dg.gain.exponentialRampToValueAtTime(0.12, t + 4);
+    [[73.42, 'sawtooth', 0.22], [73.86, 'sawtooth', 0.22], [110, 'sawtooth', 0.14], [36.71, 'sine', 0.7]].forEach(function (p) {
+      var o = c.createOscillator(); o.type = p[1]; o.frequency.value = p[0];
+      var g = c.createGain(); g.gain.value = p[2]; o.connect(g); g.connect(lp); o.start(t); self.nodes.push(o);
+    });
+    lp.connect(dg); dg.connect(A.musicBus); lfo.start(t); this.nodes.push(lfo); this.gains.push(dg);
+    // vítr
+    var n = c.createBufferSource(); n.buffer = A.noise; n.loop = true;
+    var bp = c.createBiquadFilter(); bp.type = 'bandpass'; bp.frequency.value = 520; bp.Q.value = 0.9;
+    var wl = c.createOscillator(); wl.frequency.value = 0.08; var wlg = c.createGain(); wlg.gain.value = 320; wl.connect(wlg); wlg.connect(bp.frequency);
+    var wmod = c.createGain(); wmod.gain.value = 0.6;
+    var wa = c.createOscillator(); wa.frequency.value = 0.11; var wag = c.createGain(); wag.gain.value = 0.35; wa.connect(wag); wag.connect(wmod.gain);
+    var wg = c.createGain(); wg.gain.setValueAtTime(0.0001, t); wg.gain.exponentialRampToValueAtTime(0.08, t + 5);
+    n.connect(bp); bp.connect(wmod); wmod.connect(wg); wg.connect(A.musicBus);
+    n.start(t); wl.start(t); wa.start(t); this.nodes.push(n, wl, wa); this.gains.push(wg);
+    // hrací skříňka a akordy
+    this.next = t + 2; this.idx = 0; this.beat = 0; this.loop = 0;
+    this.iv = setInterval(function () { self.tick(); }, 80);
+  },
+  tick: function () {
+    if (!this.on) return;
+    var c = A.ctx, ahead = c.currentTime + 0.3;
+    while (this.next < ahead) {
+      var ev = MELODY[this.idx], variant = this.loop % 4, bar = Math.floor(this.beat / 6) % 4;
+      if (this.beat % 6 === 0) {
+        padChord(this.next, CHORDS[bar], 6 * BEAT, variant === 2 ? 0.8 : 1);
+        if (bar === 0 && this.loop % 3 === 1) bellStrike(this.next, A.musicBus, 73.42, 0.12);
+      }
+      var play = variant !== 2, m = ev[0];
+      if (variant === 1) { m += 12; play = Math.random() > 0.3; }
+      if (variant === 3 && Math.random() < 0.15) play = false;
+      if (play) musicBox(this.next, m, variant === 3 ? 0.7 : 1);
+      this.next += ev[1] * BEAT; this.beat += ev[1]; this.idx++;
+      if (this.idx >= MELODY.length) { this.idx = 0; this.beat = 0; this.loop++; }
+    }
+  },
+  stop: function () {
+    if (!this.on) return;
+    this.on = false; clearInterval(this.iv);
+    var t = A.ctx.currentTime;
+    this.gains.forEach(function (g) {
+      if (g.gain.cancelAndHoldAtTime) g.gain.cancelAndHoldAtTime(t); else g.gain.cancelScheduledValues(t);
+      g.gain.setTargetAtTime(0, t, 0.6);
+    });
+    var nodes = this.nodes; this.nodes = []; this.gains = [];
+    setTimeout(function () { nodes.forEach(function (x) { try { x.stop(); } catch (e) { /* už zastaveno */ } }); }, 3500);
+  }
+};
+
+/* ---------- náhodné halloweenské zvuky ---------- */
+var FREQ = { casto: [15, 35], obcas: [30, 70], zridka: [60, 150] };
+var Random = {
+  timer: null,
+  pool: [['owl', 3], ['wolf', 2], ['creak', 2], ['bats', 2], ['gust', 3], ['thunder', 1], ['bell1', 1], ['heart', 1]],
+  start: function () { this.stop(); this.schedule(); },
+  stop: function () { clearTimeout(this.timer); this.timer = null; },
+  schedule: function () {
+    var r = FREQ[settings.randomFreq] || FREQ.obcas, self = this;
+    this.timer = setTimeout(function () { self.fire(); }, rand(r[0], r[1]) * 1000);
+  },
+  fire: function () {
+    var self = this;
+    if (!settings.randomOn) return;
+    if (Speech.current || Seq.running) { this.timer = setTimeout(function () { self.fire(); }, 6000); return; }
+    var total = this.pool.reduce(function (s, p) { return s + p[1]; }, 0), x = Math.random() * total, name = this.pool[0][0];
+    for (var i = 0; i < this.pool.length; i++) { x -= this.pool[i][1]; if (x <= 0) { name = this.pool[i][0]; break; } }
+    playSfx(name, rand(0.45, 0.75));
+    this.schedule();
+  }
+};
+
+/* ---------- hlasy postav ---------- */
+function genderOf(v) {
+  var n = (v.name + ' ' + (v.voiceURI || '')).toLowerCase();
+  if (/female|vlasta|zuzana|iveta|žena|eliška|eliska|tereza|klára|klara|laura/.test(n)) return 'f';
+  if (/male|antonin|antonín|jakub|muž|tomáš|tomas|petr|ondřej|ondrej|martin/.test(n)) return 'm';
+  return '?';
+}
+function shortName(v) {
+  return v.name.replace(/^Microsoft\s+/, '').replace(/\s*Online\s*/, ' ').replace(/\s*\(Natural\)/, '').replace(/\s+-\s+.*$/, '').trim();
+}
+function splitText(text) {
+  var parts = text.replace(/\s+/g, ' ').match(/[^.!?…]+(?:[.!?…]+["“”„]?)?/g) || [text];
+  var out = [], cur = '';
+  parts.forEach(function (p0) {
+    var p = p0.trim();
+    if (!p) return;
+    if (cur && (cur + ' ' + p).length > 170) { out.push(cur); cur = p; }
+    else cur = cur ? cur + ' ' + p : p;
+  });
+  if (cur) out.push(cur);
+  return out.length ? out : [text];
+}
+var Speech = {
+  ok: 'speechSynthesis' in window && 'SpeechSynthesisUtterance' in window,
+  voices: [], cz: [], token: 0, current: null, keep: [],
+  init: function () {
+    if (!this.ok) { onVoicesChanged(); return; }
+    var self = this;
+    function load() {
+      self.voices = speechSynthesis.getVoices().slice().sort(function (a, b) { return a.name.localeCompare(b.name); });
+      self.cz = self.voices.filter(function (v) { return /^cs/i.test(v.lang); });
+      onVoicesChanged();
+    }
+    load();
+    if (speechSynthesis.addEventListener) speechSynthesis.addEventListener('voiceschanged', load);
+    else speechSynthesis.onvoiceschanged = load;
+    setTimeout(load, 800); setTimeout(load, 2500);
+  },
+  autoVoice: function (cid) {
+    var pool = this.cz.length ? this.cz : this.voices.filter(function (v) { return /^sk/i.test(v.lang); });
+    if (!pool.length) return null;
+    var nat = pool.filter(function (v) { return /natural|online|neural|premium|enhanced/i.test(v.name); });
+    if (nat.length) pool = nat;
+    var want = CHARS[cid].gender;
+    var match = pool.filter(function (v) { return genderOf(v) === want; });
+    var list = match.length ? match : pool;
+    var same = Object.keys(CHARS).filter(function (k) { return CHARS[k].gender === want; });
+    return list[Math.max(0, same.indexOf(cid)) % list.length];
+  },
+  voiceFor: function (cid) {
+    var uri = settings.voices[cid];
+    if (uri) { var v = this.voices.filter(function (x) { return x.voiceURI === uri; })[0]; if (v) return v; }
+    return this.autoVoice(cid);
+  },
+  cancelNow: function () { this.token++; if (this.ok) { try { speechSynthesis.cancel(); } catch (e) { /* nic */ } } },
+  stop: function () { this.cancelNow(); this.keep = []; setSpeaking(null); },
+  say: function (cid, text, opts) {
+    opts = opts || {};
+    var self = this;
+    this.cancelNow();
+    var tok = ++this.token;
+    var st = settings.chars[cid] || CHARS[cid];
+    setSpeaking({ cid: cid, text: text.replace(/\s+/g, ' '), key: opts.key || null });
+    if (!this.ok) {
+      return sleep(Math.min(9000, 500 + text.length * 55)).then(function () {
+        if (tok !== self.token) return false;
+        setSpeaking(null); return true;
+      });
+    }
+    var voice = this.voiceFor(cid), chunks = splitText(text), i = 0;
+    return new Promise(function (resolve) {
+      function next() {
+        if (tok !== self.token) { resolve(false); return; }
+        if (i >= chunks.length) { self.keep = []; setSpeaking(null); resolve(true); return; }
+        var u = new SpeechSynthesisUtterance(chunks[i++]);
+        if (voice) { u.voice = voice; u.lang = voice.lang; } else u.lang = 'cs-CZ';
+        u.pitch = clamp(st.pitch, 0.1, 2); u.rate = clamp(st.rate, 0.5, 2);
+        u.volume = clamp(settings.speechVol * (opts.vol == null ? 1 : opts.vol), 0, 1);
+        var done = false, wd = null;
+        function fin() { if (done) return; done = true; clearTimeout(wd); next(); }
+        u.onend = fin; u.onerror = fin;
+        wd = setTimeout(fin, 4000 + u.text.length * 200 / u.rate);
+        self.keep.push(u);
+        speechSynthesis.speak(u);
+      }
+      setTimeout(next, 80);
+    });
+  }
+};
+function unlockSpeech() {
+  if (!Speech.ok) return;
+  try { var u = new SpeechSynthesisUtterance(' '); u.volume = 0; u.lang = 'cs-CZ'; speechSynthesis.speak(u); } catch (e) { /* nic */ }
+}
+function voiceStatus() {
+  if (!Speech.ok) return 'Tenhle prohlížeč neumí číst nahlas, repliky se jen zobrazí. Zkuste Microsoft Edge, Chrome nebo Safari.';
+  if (!Speech.voices.length) return 'Hledám hlasy…';
+  if (!Speech.cz.length) return 'V tomhle prohlížeči chybí český hlas, postavy by mluvily s cizím přízvukem. Nejlépe funguje Microsoft Edge s hlasy Vlasta a Antonín, na Macu a iPhonu hlas Zuzana.';
+  var names = Speech.cz.map(shortName), n = names.length;
+  return 'Česky umí ' + n + ' ' + plural(n, 'hlas', 'hlasy', 'hlasů') + ': ' + names.join(', ') + '. Postavy se liší výškou a rychlostí' + (n > 1 ? ' i samotným hlasem.' : ' hlasu.');
+}
+function onVoicesChanged() {
+  var el = $('#startVoice'); if (el) el.textContent = voiceStatus();
+  if (active === 'nastaveni') renderMain();
+}
+
+/* ---------- přehrávání replik a sekvencí ---------- */
+var clickTok = 0;
+function highlight(key) {
+  $$('.speaking').forEach(function (e) { e.classList.remove('speaking'); });
+  if (key) $$('[data-key="' + key + '"]').forEach(function (e) { e.classList.add('speaking'); });
+}
+function setSpeaking(state) {
+  Speech.current = state;
+  highlight(state && state.key);
+  var now = $('#now');
+  if (now) {
+    if (state) {
+      var ch = CHARS[state.cid];
+      now.style.setProperty('--char', ch.color);
+      $('.who', now).textContent = ch.emoji + ' ' + ch.short;
+      $('.what', now).textContent = state.text;
+      now.classList.add('on');
+    } else {
+      now.style.removeProperty('--char');
+      $('.who', now).textContent = 'Ticho';
+      $('.what', now).textContent = 'Klepněte na repliku a postava promluví.';
+      now.classList.remove('on');
+    }
+  }
+  A.applyMusic();
+}
+function stopAll() { clickTok++; Seq.stop(); Speech.stop(); }
+function playLine(item, key) {
+  if (Speech.current && Speech.current.key === key) { stopAll(); return; }
+  var tok = ++clickTok;
+  Seq.stop();
+  Speech.stop();
+  var lead = Promise.resolve();
+  if (item.sfx) { playSfx(item.sfx); lead = sleep(SFX_LEAD[item.sfx] || 500); }
+  lead.then(function () {
+    if (tok !== clickTok) return;
+    return Speech.say(item.c, item.text, { key: key }).then(function (ok) {
+      if (ok && item.after && tok === clickTok) playSfx(item.after);
+    });
+  });
+}
+var Seq = {
+  token: 0, running: null, curIdx: null,
+  run: async function (key, steps, c) {
+    this.stop();
+    var tok = ++this.token;
+    this.running = key; this.mark(key, -1);
+    for (var i = 0; i < steps.length; i++) {
+      if (tok !== this.token) return;
+      var s = steps[i];
+      this.mark(key, i);
+      if (s.sfx) playSfx(s.sfx);
+      if (s.say) { await Speech.say(s.c || c, s.say, { key: key, vol: s.vol }); if (tok !== this.token) return; }
+      var w = s.wait;
+      if (Array.isArray(w)) w = rand(w[0], w[1]);
+      if (w) { await sleep(w); if (tok !== this.token) return; }
+    }
+    if (tok === this.token) { this.running = null; this.mark(key, null); }
+  },
+  stop: function () { this.token++; var k = this.running; this.running = null; if (k) this.mark(k, null); },
+  mark: function (key, i) {
+    var self = this;
+    this.curIdx = i;
+    $$('[data-seq="' + key + '"]').forEach(function (w) { w.classList.toggle('running', self.running === key); });
+    $$('[data-seq="' + key + '"] li').forEach(function (li) { li.classList.toggle('cur', i != null && String(i) === li.getAttribute('data-i')); });
+    $$('[data-seqbtn="' + key + '"]').forEach(function (b) { b.textContent = self.running === key ? 'Zastavit' : 'Spustit'; });
+  }
+};
+function whenIdle(fn, tries) {
+  tries = tries == null ? 40 : tries;
+  if ((!Speech.current && !Seq.running) || tries <= 0) { fn(); return; }
+  setTimeout(function () { whenIdle(fn, tries - 1); }, 500);
+}
+
+/* ---------- pouštění dvojic ---------- */
+var ORD = ['první', 'druhá', 'třetí', 'čtvrtá'];
+var INTERVALS = [240, 270, 300];
+var Pairs = {
+  count: 0, total: 3, interval: 270, nextAt: null, alert: false, iv: null, ui: null,
+  release: function () {
+    if (this.count >= this.total) return;
+    var self = this;
+    this.count++; this.alert = false; clearInterval(this.iv); this.iv = null;
+    if (this.count < this.total) {
+      this.nextAt = Date.now() + this.interval * 1000;
+      this.iv = setInterval(function () { self.tick(); }, 500);
+    } else {
+      this.nextAt = null;
+      whenIdle(function () { Speech.say('vypravecka', 'Všechny dvojice jsou na cestě.', { key: 'pairs' }); });
+    }
+    this.update();
+  },
+  tick: function () {
+    var self = this;
+    if (this.nextAt && Date.now() >= this.nextAt) {
+      this.nextAt = null; clearInterval(this.iv); this.iv = null; this.alert = true;
+      playSfx('bell1');
+      setTimeout(function () {
+        whenIdle(function () { Speech.say('vypravecka', 'Moje milé příšerky, ' + ORD[self.count] + ' dvojice může vyrazit!', { key: 'pairs' }); });
+      }, 1200);
+    }
+    this.update();
+  },
+  reset: function () { clearInterval(this.iv); this.iv = null; this.count = 0; this.nextAt = null; this.alert = false; this.update(); },
+  left: function () { return this.nextAt ? Math.max(0, Math.ceil((this.nextAt - Date.now()) / 1000)) : null; },
+  update: function () {
+    updateHeader();
+    var u = this.ui, self = this;
+    if (!u) return;
+    var l = this.left();
+    u.status.textContent = 'Na cestě: ' + this.count + ' ze ' + this.total + ' dvojic.';
+    u.digits.textContent = l != null ? fmt(l) : (this.alert ? 'Teď!' : (this.count >= this.total ? 'Hotovo' : '–'));
+    u.btn.textContent = this.count >= this.total ? 'Všechny vyrazily' : 'Vyrazila ' + (this.count + 1) + '. dvojice';
+    u.btn.disabled = this.count >= this.total;
+    $$('button', u.opts).forEach(function (b, i) { b.setAttribute('aria-pressed', String(INTERVALS[i] === self.interval)); });
+  }
+};
+
+/* ---------- hlavička ---------- */
+var startedAt = null;
+function updateHeader() {
+  var c = $('#clock'); if (c) c.textContent = startedAt ? 'Hra běží ' + fmt((Date.now() - startedAt) / 1000) : '';
+  var np = $('#nextpair');
+  if (np) {
+    var l = Pairs.left();
+    np.textContent = l != null ? 'Další dvojice za ' + fmt(l) : (Pairs.alert ? 'Další dvojice může vyrazit' : '');
+    np.hidden = !np.textContent;
+  }
+}
+
+/* ---------- vykreslení ---------- */
+var TABS = STATIONS.map(function (st) {
+  return { id: st.id, emoji: st.emoji || CHARS[st.char].emoji, label: st.num ? st.num + ' ' + st.tab : st.tab, color: CHARS[st.char].color };
+}).concat([
+  { id: 'zvuky', emoji: '🔔', label: 'Zvuky', color: 'var(--flame)' },
+  { id: 'nastaveni', emoji: '⚙️', label: 'Nastavení', color: 'var(--flame)' }
+]);
+var active = (location.hash || '').slice(1);
+if (!TABS.some(function (t) { return t.id === active; })) active = 'uvod';
+
+function renderTabs() {
+  var nav = $('#tabs'); nav.innerHTML = '';
+  TABS.forEach(function (tb) {
+    nav.append(h('button', { role: 'tab', 'aria-selected': String(tb.id === active), style: '--tabc:' + tb.color, onclick: function () { go(tb.id); } },
+      h('span', { 'aria-hidden': 'true' }, tb.emoji), h('span', null, tb.label)));
+  });
+}
+function go(id) {
+  active = id;
+  try { history.replaceState(null, '', '#' + id); } catch (e) { /* file:// bez historie */ }
+  renderTabs(); renderMain();
+  window.scrollTo(0, 0);
+  var sel = $('#tabs [aria-selected="true"]');
+  if (sel && sel.scrollIntoView) sel.scrollIntoView({ inline: 'center', block: 'nearest' });
+}
+function hero(emoji, title, place, color) {
+  return h('div', { class: 'hero', style: '--char:' + color },
+    h('div', { class: 'mark', 'aria-hidden': 'true' }, emoji),
+    h('div', null, h('h2', null, title), place ? h('p', { class: 'place' }, place) : null));
+}
+function renderMain() {
+  var main = $('#main'); main.innerHTML = '';
+  var st = STATIONS.filter(function (s) { return s.id === active; })[0];
+  if (st) main.append(renderStation(st));
+  else if (active === 'zvuky') main.append(renderBoard());
+  else main.append(renderSettings());
+  if (Speech.current) highlight(Speech.current.key);
+  if (Seq.running) Seq.mark(Seq.running, Seq.curIdx);
+}
+function renderStation(st) {
+  var ch = CHARS[st.char];
+  var box = h('section', { style: '--char:' + ch.color });
+  box.append(hero(st.emoji || ch.emoji, st.id === 'uvod' ? st.title : ch.name, st.place, ch.color));
+  st.items.forEach(function (it, i) {
+    var key = st.id + '-' + i, c = it.c || st.char;
+    var el = null;
+    if (it.t === 'cue') el = h('p', { class: 'cue' }, it.text);
+    else if (it.t === 'h') el = h('h3', { class: 'sub' }, it.text);
+    else if (it.t === 'line') el = renderLine(it, key);
+    else if (it.t === 'riddle') el = renderRiddle(it, key, c);
+    else if (it.t === 'tf') el = renderTF(it, key, c);
+    else if (it.t === 'seq') el = renderSeq(it, key);
+    else if (it.t === 'quick') el = renderQuick(it, key);
+    else if (it.t === 'timer') el = renderTimer(it, key);
+    else if (it.t === 'pairs') el = renderPairs();
+    else if (it.t === 'namegen') el = renderNamegen();
+    else if (it.t === 'sfx') el = renderSfxRow(it.list);
+    if (el) box.append(el);
+  });
+  var idx = STATIONS.indexOf(st), nx = STATIONS[idx + 1];
+  if (nx) box.append(h('p', { class: 'nextst' }, h('button', { class: 'btn', onclick: function () { go(nx.id); } }, 'Další: ' + CHARS[nx.char].name)));
+  return box;
+}
+function renderLine(it, key) {
+  var ch = CHARS[it.c];
+  var paras = it.text.split('\n\n').map(function (p) { return h('span', { class: 'para' }, p); });
+  return h('button', { class: 'line', 'data-key': key, style: '--char:' + ch.color, onclick: function () { playLine(it, key); } },
+    h('span', { class: 'play', 'aria-hidden': 'true' }, h('span', { class: 'i-play' }, '▶\uFE0E'), h('span', { class: 'i-stop' }, '■\uFE0E')),
+    h('span', null, h('span', { class: 'lbl' }, ch.emoji + ' ' + it.label), h('span', { class: 'txt' }, paras)));
+}
+function sayFrom(c, text, key) { clickTok++; Seq.stop(); Speech.say(c, text, { key: key }); }
+function renderRiddle(it, key, c) {
+  var ch = CHARS[c];
+  var ans = h('p', { class: 'ans', hidden: true }, 'Odpověď: ' + it.a);
+  return h('div', { class: 'qa', 'data-key': key, style: '--char:' + ch.color },
+    it.older ? h('p', { class: 'tag' }, 'Pro starší děti') : null,
+    h('p', { class: 'q' }, '„' + it.q + '“'),
+    h('div', { class: 'acts' },
+      h('button', { class: 'btn primary', onclick: function () { sayFrom(c, it.q, key); } }, 'Přečíst'),
+      h('button', { class: 'btn', onclick: function () { ans.hidden = false; sayFrom(c, it.say, key); } }, 'Odpověď')),
+    ans);
+}
+function renderTF(it, key, c) {
+  var ch = CHARS[c];
+  var ans = h('p', { class: 'ans', hidden: true }, it.truth ? 'Pravda, děti kvákají.' : 'Nepravda, žbluňk a dřep.');
+  return h('div', { class: 'qa', 'data-key': key, style: '--char:' + ch.color },
+    h('p', { class: 'q' }, '„' + it.q + '“'),
+    h('div', { class: 'acts' },
+      h('button', { class: 'btn primary', onclick: function () { sayFrom(c, it.q, key); } }, 'Přečíst'),
+      h('button', { class: 'btn', onclick: function () {
+        ans.hidden = false;
+        var tok = ++clickTok; Seq.stop(); Speech.stop();
+        playSfx(it.truth ? 'frogs' : 'splash', 0.8);
+        setTimeout(function () { if (tok === clickTok) Speech.say(c, it.say, { key: key }); }, 900);
+      } }, 'Odpověď')),
+    ans);
+}
+function renderSeq(it, key) {
+  var ch = CHARS[it.c];
+  var lis = [];
+  it.steps.forEach(function (s, i) { if (s.say) lis.push(h('li', { 'data-i': i }, s.say)); });
+  return h('div', { class: 'widget', 'data-seq': key, 'data-key': key, style: '--char:' + ch.color },
+    h('h3', null, ch.emoji + ' ' + it.label),
+    it.note ? h('p', { class: 'tag' }, it.note) : null,
+    h('ol', { class: 'steps' }, lis),
+    h('button', { class: 'btn primary', 'data-seqbtn': key, onclick: function () {
+      if (Seq.running === key) { stopAll(); return; }
+      clickTok++; Speech.stop(); Seq.run(key, it.steps, it.c);
+    } }, Seq.running === key ? 'Zastavit' : 'Spustit'));
+}
+function renderQuick(it, key) {
+  var ch = CHARS[it.c];
+  return h('div', { class: 'opts', style: '--char:' + ch.color },
+    it.note ? h('span', { class: 'tag' }, it.note) : null,
+    it.list.map(function (q) {
+      return h('button', { class: 'btn primary', onclick: function () {
+        clickTok++; Seq.stop();
+        if (q.sfx) playSfx(q.sfx);
+        Speech.say(it.c, q.say, { key: key });
+      } }, q.label);
+    }));
+}
+var Timers = {};
+function renderTimer(it, key) {
+  var ch = CHARS[it.c];
+  var s = Timers[key] || (Timers[key] = { sec: it.seconds, left: null, phase: 'idle', iv: null, update: null });
+  var digits = h('div', { class: 'digits' });
+  var startB = h('button', { class: 'btn primary' });
+  var opts = h('div', { class: 'opts' }, it.options.map(function (o) {
+    return h('button', { class: 'btn small', onclick: function () { if (s.phase !== 'idle') return; s.sec = o; update(); } }, o + ' s');
+  }));
+  function update() {
+    digits.textContent = s.phase === 'count' ? String(s.left) : String(s.sec);
+    startB.textContent = s.phase === 'idle' ? 'Spustit odpočet' : 'Zastavit odpočet';
+    $$('button', opts).forEach(function (b, i) { b.setAttribute('aria-pressed', String(it.options[i] === s.sec)); b.disabled = s.phase !== 'idle'; });
+  }
+  s.update = update;
+  startB.addEventListener('click', function () {
+    if (s.phase !== 'idle') { clearInterval(s.iv); s.iv = null; s.phase = 'idle'; s.left = null; update(); return; }
+    clickTok++; Seq.stop();
+    s.phase = 'intro'; update();
+    Speech.say(it.c, it.startText, { key: key }).then(function () {
+      if (s.phase !== 'intro') return;
+      s.phase = 'count'; s.left = s.sec; if (s.update) s.update();
+      s.iv = setInterval(function () {
+        s.left--;
+        if (s.left > 0) playSfx('tick', s.left <= 5 ? 1 : 0.45);
+        if (s.left <= 0) {
+          clearInterval(s.iv); s.iv = null; s.phase = 'idle'; s.left = null;
+          playSfx('sparkle');
+          Speech.say(it.c, it.endText, { key: key });
+        }
+        if (s.update) s.update();
+      }, 1000);
+    });
+  });
+  update();
+  return h('div', { class: 'widget', 'data-key': key, style: '--char:' + ch.color },
+    h('h3', null, ch.emoji + ' Odpočet na zapamatování'),
+    h('p', { class: 'tag' }, 'Jiskřička ohlásí start, pak tiká odpočet a na konci zazvoní kouzlo.'),
+    h('div', { class: 'trow' }, digits, h('div', null, startB, opts)));
+}
+function renderPairs() {
+  var status = h('p', { class: 'pstatus' }), digits = h('div', { class: 'digits' });
+  var btn = h('button', { class: 'btn primary', onclick: function () { Pairs.release(); } });
+  var reset = h('button', { class: 'btn', onclick: function () { Pairs.reset(); } }, 'Vynulovat');
+  var opts = h('div', { class: 'opts' }, h('span', { class: 'tag' }, 'Rozestup:'),
+    INTERVALS.map(function (sec) { return h('button', { class: 'btn small', onclick: function () { Pairs.interval = sec; Pairs.update(); } }, fmt(sec)); }));
+  Pairs.ui = { status: status, digits: digits, btn: btn, opts: opts };
+  var el = h('div', { class: 'widget', 'data-key': 'pairs', style: '--char:var(--c-narr)' },
+    h('h3', null, 'Pouštění dvojic'),
+    h('p', { class: 'tag' }, 'Po vyražení dvojice běží odpočet. Na konci zazní zvon a vypravěčka pustí další dvojici.'),
+    h('div', { class: 'trow' }, digits, h('div', null, status, h('div', { class: 'acts' }, btn, reset))),
+    opts);
+  Pairs.update();
+  return el;
+}
+function renderNamegen() {
+  var out = h('p', { class: 'namegen-out', 'aria-live': 'polite' });
+  return h('div', { class: 'widget' },
+    h('h3', null, 'Kouzelná jména pro věci z krabice'),
+    h('p', { class: 'tag' }, 'Klepněte a vylosujte první slovo, vy doplníte název věci.'),
+    h('div', { class: 'opts' }, h('button', { class: 'btn primary', onclick: function () {
+      var w = pick(ADJ);
+      out.textContent = w.charAt(0).toUpperCase() + w.slice(1) + ' …';
+      playSfx('sparkle', 0.5);
+    } }, 'Vylosovat slovo')),
+    out);
+}
+function sfxChip(name) {
+  var s = SFX[name];
+  return h('button', { class: 'chip', onclick: function () { playSfx(name); } }, h('span', { class: 'e', 'aria-hidden': 'true' }, s.e), h('span', null, s.label));
+}
+function renderSfxRow(list) {
+  return h('div', { class: 'sfxrow' }, h('span', { class: 'tag' }, 'Zvuky k zastávce:'), list.map(sfxChip));
+}
+function renderBoard() {
+  return h('section', { style: '--char:var(--flame)' },
+    hero('🔔', 'Zvuky', 'Klepnutím zvuk přehrajete. Hudbu a náhodné zvuky zapínáte dole na liště.', 'var(--flame)'),
+    h('div', { class: 'board' }, Object.keys(SFX).filter(function (k) { return !SFX[k].hidden; }).map(sfxChip)));
+}
+function slider(label, obj, key, min, max, step, onChange, fmtFn) {
+  fmtFn = fmtFn || function (v) { return Math.round(v * 100) + ' %'; };
+  var out = h('output', null, fmtFn(obj[key]));
+  var input = h('input', { type: 'range', min: min, max: max, step: step, value: obj[key], 'aria-label': label });
+  input.addEventListener('input', function () {
+    obj[key] = parseFloat(input.value); out.textContent = fmtFn(obj[key]); save();
+    if (onChange) onChange(obj[key]);
+  });
+  return h('div', null, h('label', null, label + ': ', out), input);
+}
+function voiceSelect(cid) {
+  var sel = h('select', { 'aria-label': 'Hlas pro ' + CHARS[cid].name });
+  var auto = Speech.autoVoice(cid);
+  sel.append(h('option', { value: '' }, 'Automaticky' + (auto ? ' (' + shortName(auto) + ')' : '')));
+  var groups = [
+    ['Čeština', Speech.voices.filter(function (v) { return /^cs/i.test(v.lang); })],
+    ['Slovenština', Speech.voices.filter(function (v) { return /^sk/i.test(v.lang); })],
+    ['Ostatní jazyky', Speech.voices.filter(function (v) { return !/^(cs|sk)/i.test(v.lang); })]
+  ];
+  groups.forEach(function (g) {
+    if (!g[1].length) return;
+    sel.append(h('optgroup', { label: g[0] }, g[1].map(function (v) { return h('option', { value: v.voiceURI }, v.name + ' (' + v.lang + ')'); })));
+  });
+  sel.value = settings.voices[cid] || '';
+  if (sel.value !== (settings.voices[cid] || '')) sel.value = '';
+  sel.addEventListener('change', function () {
+    if (sel.value) settings.voices[cid] = sel.value; else delete settings.voices[cid];
+    save();
+  });
+  return sel;
+}
+function renderSettings() {
+  var box = h('section', { style: '--char:var(--flame)' },
+    hero('⚙️', 'Nastavení', 'Hlasy postav, hlasitost a náhodné zvuky. Ukládá se v tomhle prohlížeči.', 'var(--flame)'),
+    h('p', { class: 'cue' }, voiceStatus()));
+  var freq = h('select', { 'aria-label': 'Jak často hrají náhodné zvuky' },
+    [['casto', 'Často, každých 15–35 s'], ['obcas', 'Občas, každých 30–70 s'], ['zridka', 'Zřídka, každé 1–2,5 min']].map(function (o) { return h('option', { value: o[0] }, o[1]); }));
+  freq.value = settings.randomFreq;
+  freq.addEventListener('change', function () { settings.randomFreq = freq.value; save(); if (settings.randomOn && startedAt) Random.start(); });
+  box.append(h('div', { class: 'set' },
+    h('h3', null, 'Hlasitost'),
+    slider('Hlas postav', settings, 'speechVol', 0, 1, 0.05),
+    slider('Hudba', settings, 'musicVol', 0, 1, 0.05, function () { A.applyMusic(); }),
+    slider('Zvuky', settings, 'sfxVol', 0, 1, 0.05, function () { A.applySfx(); }),
+    h('label', null, 'Náhodné zvuky'), freq));
+  Object.keys(CHARS).forEach(function (cid) {
+    var ch = CHARS[cid], cs = settings.chars[cid];
+    box.append(h('div', { class: 'set', style: '--char:' + ch.color },
+      h('h3', null, ch.emoji + ' ' + ch.name),
+      Speech.ok ? voiceSelect(cid) : null,
+      slider('Výška hlasu', cs, 'pitch', 0.1, 2, 0.05, null, function (v) { return v.toFixed(2); }),
+      slider('Rychlost', cs, 'rate', 0.5, 1.6, 0.05, null, function (v) { return v.toFixed(2); }),
+      h('div', { class: 'acts' }, h('button', { class: 'btn primary', 'data-key': 'test-' + cid, onclick: function () {
+        sayFrom(cid, 'Moje milé příšerky, tady ' + ch.name + '.', 'test-' + cid);
+      } }, 'Vyzkoušet hlas'))));
+  });
+  box.append(h('div', { class: 'acts' }, h('button', { class: 'btn', onclick: function () {
+    settings = defaults(); save(); A.applyMusic(); A.applySfx(); updateToggles(); renderMain();
+  } }, 'Obnovit výchozí nastavení')));
+  return box;
+}
+
+/* ---------- ovládací lišta ---------- */
+function updateToggles() {
+  $('#tMusic').setAttribute('aria-pressed', String(Music.on));
+  $('#tRandom').setAttribute('aria-pressed', String(!!settings.randomOn));
+}
+$('#tMusic').addEventListener('click', function () {
+  A.init(); A.resume();
+  if (Music.on) { Music.stop(); settings.musicOn = false; } else { Music.start(); settings.musicOn = true; A.applyMusic(); }
+  save(); updateToggles();
+});
+$('#tRandom').addEventListener('click', function () {
+  settings.randomOn = !settings.randomOn; save();
+  if (settings.randomOn) { Random.start(); playSfx('owl', 0.6); } else Random.stop();
+  updateToggles();
+});
+$('#bStop').addEventListener('click', stopAll);
+document.addEventListener('keydown', function (e) { if (e.key === 'Escape') stopAll(); });
+document.addEventListener('pointerdown', function () { A.resume(); }, { passive: true });
+
+/* ---------- spuštění ---------- */
+var wakeLock = null;
+function keepAwake() {
+  try {
+    if ('wakeLock' in navigator) navigator.wakeLock.request('screen').then(function (w) { wakeLock = w; }).catch(function () {});
+  } catch (e) { /* nepodporováno */ }
+}
+document.addEventListener('visibilitychange', function () {
+  if (document.visibilityState === 'visible' && startedAt) { keepAwake(); A.resume(); }
+});
+function launch(withMusic) {
+  A.init(); A.resume(); unlockSpeech();
+  settings.musicOn = withMusic; save();
+  if (withMusic) Music.start();
+  A.applyMusic(); A.applySfx();
+  if (settings.randomOn) Random.start();
+  startedAt = Date.now();
+  $('#start').hidden = true;
+  updateToggles(); updateHeader(); keepAwake();
+  playSfx('creak', 0.7);
+}
+$('#goMusic').addEventListener('click', function () { launch(true); });
+$('#goQuiet').addEventListener('click', function () { launch(false); });
+if (!settings.musicOn) { $('#goQuiet').className = 'btn primary big'; $('#goMusic').className = 'btn big'; }
+
+setInterval(updateHeader, 1000);
+renderTabs();
+renderMain();
+Speech.init();
+})();
+</script>
+</body>
+</html>
