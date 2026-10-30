@@ -753,6 +753,10 @@ function splitText(text) {
   if (cur) out.push(cur);
   return out.length ? out : [text];
 }
+function pron(text) {
+  // výslovnost pro hlasy: Halloween → Helouín (halloweenské → helouínské)
+  return text.replace(/hallowee?n/gi, function (m) { return m.charAt(0) === 'H' ? 'Helouín' : 'helouín'; });
+}
 var Speech = {
   ok: 'speechSynthesis' in window && 'SpeechSynthesisUtterance' in window,
   voices: [], cz: [], token: 0, current: null, keep: [],
@@ -800,7 +804,7 @@ var Speech = {
         setSpeaking(null); return true;
       });
     }
-    var voice = this.voiceFor(cid), chunks = splitText(text), i = 0;
+    var voice = this.voiceFor(cid), chunks = splitText(pron(text)), i = 0;
     return new Promise(function (resolve) {
       function next() {
         if (tok !== self.token) { resolve(false); return; }
